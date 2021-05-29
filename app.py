@@ -24,46 +24,32 @@ def review_scrapping():  # Function to scrap contents
         productName = request.form['content'].replace(" ", "")  # Product name to search
 
         # try:
-        try:
-            reviewsFromServer = mongodbServer.search_collection(productName)
-        except:
-            return "Error in mongodb collection search"
-
+            # reviewsFromServer = mongodbServer.search_collection(productName)
+        reviewsFromServer = []
         if len(reviewsFromServer) > 0:  # If the review count >0 show output to the user
             return render_template('results.html', reviews=reviewsFromServer)  # Show product reviews to the user
         else:  # else search in flipcart site
             reviewsToServer = []
 
-            try:
-                productURL = "https://www.flipkart.com/search?q=" + productName  # URL to search on flipcart
-                mainProductPage = get_page(productURL)
-                allProducts = mainProductPage.findAll("div", {"class": "_13oc-S"})  # Select all products
-            except:
-                return "Error in opening product page"
+            productURL = "https://www.flipkart.com/search?q=" + productName  # URL to search on flipcart
+            mainProductPage = get_page(productURL)
+            allProducts = mainProductPage.findAll("div", {"class": "_13oc-S"})  # Select all products
 
-            try:
-                for i in range(len(allProducts)):
-                    firstProduct = allProducts[i]  # Select first product from the list of products
-                    firstProductLink = "https://www.flipkart.com" + firstProduct.div.div.a['href']  # Select first product link
-                    uniqueProductPage = get_page(firstProductLink)
-                    reviewList = productDetails.get_details(uniqueProductPage)
-                    reviewsToServer.append(reviewList)  # Append each review as dictionary into reviews list
-            except:
-                return "Error in opening individual products"
+            for i in range(len(allProducts)):
+                firstProduct = allProducts[i]  # Select first product from the list of products
+                firstProductLink = "https://www.flipkart.com" + firstProduct.div.div.a['href']  # Select first product link
+                uniqueProductPage = get_page(firstProductLink)
+                reviewList = productDetails.get_details(uniqueProductPage)
+                reviewsToServer.append(reviewList)  # Append each review as dictionary into reviews list
 
-            try:
-                mongodbServer.create_collection(productName, reviewsToServer[:15])
-            except:
-                return "Error in mongodb collection creation"
-
-            reviewsToServer = reviewsToServer
+            mongodbServer.create_collection(productName, reviewsToServer[:20])
 
             try:
                 return render_template('results.html', reviews=reviewsToServer)  # Show product reviews to the user
             except:
-                return "After insertion to atlas display page error"
+                return "Scrapping success HTML page error"
         # except:
-        #    return "Something went wrong"
+        #    return "OOPS! Something gone wrong, Try some different product"
     else:  # If method==GET, show the index page to type product name
         return render_template('index.html')  # Show search bar page to the user
 

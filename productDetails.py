@@ -1,17 +1,43 @@
 """
-This is used to product details from the flipcart site
+This file is used to product details from the flipcart site
 Used to retrieve details like reviewer name, rating, comment and so on
 """
 
-# from bs4 import BeautifulSoup  # Makes easy to scrap contents from web page
+def get_product_name(page):
+    try:
+        prodName = page.find_all("h1", {"class": "yhB1nd"})[0].text  # Name of the product
+    except:
+        prodName = "No Name"
+    return prodName
 
-def get_details(uniqueProductPage):
+def get_product_image(page):
+    try:
+        imageLink = page.find_all("div", {"class": "CXW8mj _3nMexc"})[0].img['src']  # Name of the product
+    except:
+        imageLink = ""
+    return imageLink
 
-    pageReviews = []
-    commentBoxes = uniqueProductPage.findAll("div", {"class": "col _2wzgFH"})  # Select all comments
+def get_product_highlights(page):
+    try:
+        prodHighs = {}
+        highlights = page.find_all("li", {"class": "_21Ahn-"})  # Name of the product
+        for i in range(len(highlights)):
+            prodHighs[str(i)] = highlights[i].text
+    except:
+        prodHighs = {'0': "No highlights"}
+    return [prodHighs]
 
-    reviewsAndRatings = uniqueProductPage.findAll("div", {"class": "row _3AjFsn _2c2kV-"})
+def get_product_description(page):
+    try:
+        prodDesc = page.find_all("div", {"class": "_1mXcCf RmoJUa"})[0].text  # Name of the product
+    except:
+        prodDesc = "No Description"
+    return prodDesc
+
+def get_product_ratings(page):
+    reviewsAndRatings = page.findAll("div", {"class": "row _3AjFsn _2c2kV-"})
     reviewRatings = []
+
     try:
         overallRating = reviewsAndRatings[0].find_all("div", {"class": "_2d4LTz"})[0].text
     except:
@@ -27,16 +53,16 @@ def get_details(uniqueProductPage):
     except:
         reviewCount = '0'
 
-    ratings = dict(overallRating=overallRating, ratingCount=ratingCount,reviewCount=reviewCount)
+    ratings = dict(overallRating=overallRating, ratingCount=ratingCount, reviewCount=reviewCount)
 
     try:
         startsCountAll = reviewsAndRatings[0].find_all("div", {"class": "_1uJVNT"})
         startsCount = {}
         n = len(startsCountAll)
         for star in range(n):
-            startsCount[str(n-star)] = startsCountAll[star].text
+            startsCount[str(n - star)] = startsCountAll[star].text
     except:
-        startsCount = '0'
+        startsCount = {'0': '0'}
 
     try:
         featureName = reviewsAndRatings[0].find_all("div", {"class": "_3npa3F"})
@@ -53,15 +79,12 @@ def get_details(uniqueProductPage):
     reviewRatings.append(startsCount)
     reviewRatings.append(featureNameRating)
 
+    return reviewRatings
 
-    try:
-        prodName = uniqueProductPage.find_all("h1", {"class": "yhB1nd"})[0].text  # Name of the product
-    except:
-        prodName = "No Name"
 
-    pageReviews.append(dict(prodName=prodName))
-    pageReviews.append(dict(reviewRatings=reviewRatings))
-    prodName = prodName[:16]
+def get_product_comments(page):
+    commentBoxes = page.findAll("div", {"class": "col _2wzgFH"})  # Select all comments
+    reviews = []
 
     # This for loop will iterate through each comments and retrieve all the information from it.
     # Information line Comment name, rating, heading, review
@@ -70,14 +93,17 @@ def get_details(uniqueProductPage):
             name = cBox.find_all("p", {"class": "_2sc7ZR _2V5EHH"})[0].text  # Name of the customer
         except:
             name = 'No Name'
+
         try:
             rating = cBox.find_all("div", {"class": "_3LWZlK _1BLPMq"})[0].text  # Rating given by the customer
         except:
             rating = 'No Rating'
+
         try:
             commentHead = cBox.find_all("p", {"class": "_2-N8zT"})[0].text  # Review heading given by the customer
         except:
             commentHead = 'No Comment Heading'
+
         try:
             customerComment = cBox.find_all("div", {"class": "t-ZTKy"})[0].div.text  # Review by customer
             customerComment = customerComment.replace("READ MORE", "")
@@ -86,7 +112,27 @@ def get_details(uniqueProductPage):
 
         reviewDictionary = dict(Name=name, Rating=rating, CommentHead=commentHead,
                                 Comment=customerComment)  # Store retrieved information as a dictionary
-        pageReviews.append(reviewDictionary)
+        reviews.append(reviewDictionary)
 
-    result = {prodName: pageReviews}
+    return reviews
+
+
+def get_details(page):
+    scrappedContent = []
+
+    productName = get_product_name(page)
+    productImage = get_product_image(page)
+    productHighlights = get_product_highlights(page)
+    productDescription = get_product_description(page)
+    productRatings = get_product_ratings(page)
+    productReviews = get_product_comments(page)
+
+    scrappedContent.append(dict(prodName=productName))
+    scrappedContent.append(dict(prodImage=productImage))
+    scrappedContent.append(dict(prductHighlights=productHighlights))
+    scrappedContent.append(dict(productDescription=productDescription))
+    scrappedContent.append(dict(reviewRatings=productRatings))
+    scrappedContent.append(dict(productReviews=productReviews))
+
+    result = {productName[:15].replace('.', ''): scrappedContent}
     return result
