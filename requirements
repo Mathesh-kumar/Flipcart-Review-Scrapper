@@ -1,0 +1,8 @@
+flask
+urllib3
+bs4
+beautifulsoup4
+requests
+gunicorn
+pymongo
+dnspython[srv]
