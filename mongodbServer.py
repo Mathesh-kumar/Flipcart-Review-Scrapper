@@ -22,13 +22,20 @@ def credential():
 """
 def search_collection(product):
     dataBase = credential()  # Create connection to the database in mongo atlas server
-    flipcartReviews = dataBase[product].find({}, {'_id': 0})  # Search whether product reviews already present in the database
+    flipcartReviews = dataBase[product].find({})  # Search whether product reviews already present in the database
 
-    reviews = []  # List to store the comments
-    for review in enumerate(flipcartReviews):  # Iterate through each review. Since flipcartReviews is an mongodb cursor object
-        reviews.append(review[1])  # Append each review to the reviews list
-    return reviews
+    # reviews = []  # List to store the comments
+    # for review in enumerate(flipcartReviews):  # Iterate through each review. Since flipcartReviews is an mongodb cursor object
+    #     pid = review[1]['_id']
+    #     reviews.append({str(pid): review[1]['product']})
+    # return reviews
 
+    reviewList = {}
+
+    for review in enumerate(flipcartReviews):
+        pid = review[1]['_id']
+        reviewList[str(pid)] = review[1]['product']
+    return reviewList
 
 """
     Function to create new collection for the product searched in the database.
