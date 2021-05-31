@@ -1,4 +1,6 @@
 # Import needed libraries
+import requests
+from bs4 import BeautifulSoup
 
 """
     Function to scrap product name from the flipcart page
@@ -22,7 +24,7 @@ def get_product_image(page):
     try:
         imageLink = page.find_all("div", {"class": "CXW8mj _3nMexc"})[0].img['src']  # Sample image link of the product
     except:
-        imageLink = ""
+        imageLink = "No Link"
     return imageLink
 
 
@@ -92,7 +94,7 @@ def get_product_ratings(page):
         for star in range(n):
             startsCount[str(n - star)] = startsCountAll[star].text
     except:
-        startsCount = {'0': '0'}
+        startsCount = {'1': '0', '2': '0', '3': '0', '4': '0', '5': '0'}
 
     # Product feature ratings
     try:
@@ -104,7 +106,7 @@ def get_product_ratings(page):
             rate = featureRating[feature].text
             featureNameRating[name] = rate
     except:
-        featureNameRating = '0'
+        featureNameRating = {'No features': '0'}
 
     reviewRatings.append(ratings)
     reviewRatings.append(startsCount)
@@ -119,36 +121,52 @@ def get_product_ratings(page):
     Returns comments as list of dictionary
 """
 def get_product_comments(page):
-    commentBoxes = page.findAll("div", {"class": "col _2wzgFH"})  # Select all comments
+
+    commentsPageLink = "https://www.flipkart.com" + page.findAll("div", {"class": "col JOpGWq"})[0].findAll("a")[-1]['href']
+    commentsPage = requests.get(commentsPageLink)  # Request webpage from internet
+    commentsPage = BeautifulSoup(commentsPage.text, "html.parser")  # Parse web page as html
+    links = commentsPage.findAll("nav", {"class": "yFHi8N"})[0].findAll("a")
+    commentLinks = []
+    for a in links:
+        link = "https://www.flipkart.com" + a['href']
+        commentLinks.append(link)
+    commentLinks = commentLinks[:10]
+
+
     reviews = []
+    for link in commentLinks:
+        page = requests.get(link)  # Request webpage from internet
+        page = BeautifulSoup(page.text, "html.parser")  # Parse web page as html
 
-    # This for loop will iterate through each comments and retrieve all the information from it.
-    # Information line Comment name, rating, heading, review
-    for cBox in commentBoxes:
-        try:
-            name = cBox.find_all("p", {"class": "_2sc7ZR _2V5EHH"})[0].text  # Name of the customer
-        except:
-            name = 'No Name'
+        commentBoxes = page.findAll("div", {"class": "col _2wzgFH K0kLPL"})  # Select all comments
 
-        try:
-            rating = cBox.find_all("div", {"class": "_3LWZlK _1BLPMq"})[0].text  # Rating given by the customer
-        except:
-            rating = 'No Rating'
+        # This for loop will iterate through each comments and retrieve all the information from it.
+        # Information line Comment name, rating, heading, review
+        for cBox in commentBoxes:
+            try:
+                name = cBox.find_all("p", {"class": "_2sc7ZR _2V5EHH"})[0].text  # Name of the customer
+            except:
+                name = 'No Name'
 
-        try:
-            commentHead = cBox.find_all("p", {"class": "_2-N8zT"})[0].text  # Review heading given by the customer
-        except:
-            commentHead = 'No Comment Heading'
+            try:
+                rating = cBox.find_all("div", {"class": "_3LWZlK _1BLPMq"})[0].text  # Rating given by the customer
+            except:
+                rating = 'No Rating'
 
-        try:
-            customerComment = cBox.find_all("div", {"class": "t-ZTKy"})[0].div.text  # Review by customer
-            customerComment = customerComment.replace("READ MORE", "")
-        except:
-            customerComment = 'No Customer Comment'
+            try:
+                commentHead = cBox.find_all("p", {"class": "_2-N8zT"})[0].text  # Review heading given by the customer
+            except:
+                commentHead = 'No Comment Heading'
 
-        reviewDictionary = dict(Name=name, Rating=rating, CommentHead=commentHead,
-                                Comment=customerComment)  # Store retrieved information as a dictionary
-        reviews.append(reviewDictionary)
+            try:
+                customerComment = cBox.find_all("div", {"class": "t-ZTKy"})[0].div.text  # Review by customer
+                customerComment = customerComment.replace("READ MORE", "")
+            except:
+                customerComment = 'No Customer Comment'
+
+            reviewDictionary = dict(Name=name, Rating=rating, CommentHead=commentHead,
+                                    Comment=customerComment)  # Store retrieved information as a dictionary
+            reviews.append(reviewDictionary)
 
     return reviews
 
@@ -175,8 +193,8 @@ def get_details(link, page):
     scrappedContent.append(dict(productImage=productImage))
     scrappedContent.append(dict(prductHighlights=productHighlights))
     scrappedContent.append(dict(productDescription=productDescription))
-    scrappedContent.append(dict(reviewRatings=productRatings))
+    scrappedContent.append(dict(productRatings=productRatings))
     scrappedContent.append(dict(productReviews=productReviews))
 
-    result = {productName[:15].replace('.', ''): scrappedContent}  # Create dictionary with product name as key and details as values
+    result = {'product': scrappedContent}  # Create dictionary with product name as key and details as values
     return result   # Result returned to app.py

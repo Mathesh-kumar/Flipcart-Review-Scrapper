@@ -37,6 +37,7 @@ def review_scrapping():  # Function to scrap contents
                 mainProductPage = get_page(productURL)
                 allProducts = mainProductPage.findAll("div", {"class": "_13oc-S"})  # Select all products
 
+                allProducts = allProducts[:8]
                 for i in range(len(allProducts)):
                     firstProduct = allProducts[i]  # Select first product from the list of products
                     uniqueProductLink = "https://www.flipkart.com" + firstProduct.div.div.a['href']  # Select first product link
@@ -44,7 +45,7 @@ def review_scrapping():  # Function to scrap contents
                     reviewList = productDetails.get_details(uniqueProductLink, uniqueProductPage)
                     reviewsToServer.append(reviewList)  # Append each review as dictionary into reviews list
 
-                mongodbServer.create_collection(productName, reviewsToServer[:20])
+                mongodbServer.create_collection(productName, reviewsToServer)
 
                 try:
                     return render_template('results.html', reviews=reviewsToServer)  # Show product reviews to the user
