@@ -33,7 +33,8 @@ def review_scrapping(product):  # Function to scrap contents
                 cache['result'] = reviewsFromServer
                 return jsonify(reviewsFromServer)  # Show product reviews to the user
             except:
-                return "reviewsFromServer page error"
+                error = {"mess": "OPPS!! Something went wrong during collection retrival"}
+                return jsonify(error)
         else:  # else search in flipcart site
             reviewsToServer = []
 
@@ -49,15 +50,18 @@ def review_scrapping(product):  # Function to scrap contents
                 reviewList = productDetails.get_details(uniqueProductLink, uniqueProductPage)
                 reviewsToServer.append(reviewList)  # Append each review as dictionary into reviews list
 
-            cache['result'] = reviewsToServer
             mongodbServer.create_collection(productName, reviewsToServer)
 
+            reviewsToServer = mongodbServer.search_collection(productName)
+            cache['result'] = reviewsToServer
             try:
                 return jsonify(reviewsToServer)  # Show product reviews to the user
             except:
-                return "reviewsToServer page error"
+                error = {"mess": "OPPS!! Something went wrong during collection updation."}
+                return jsonify(error)
     except:
-        return "OOPS! Something gone wrong, Try some different product"
+        error = {"mess": "OPPS!! Product not found , Try different product.."}
+        return jsonify(error)
 
 
 @app.route('/product/<pid>', methods=['GET'])
